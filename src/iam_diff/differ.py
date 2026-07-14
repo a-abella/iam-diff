@@ -22,7 +22,7 @@ from dataclasses import dataclass
 from enum import Enum
 from typing import TextIO
 
-from role_diff.normalizer import AccessMap, ResourceAccess
+from iam_diff.normalizer import AccessMap, ResourceAccess
 
 # ---------------------------------------------------------------------------
 # ANSI helpers

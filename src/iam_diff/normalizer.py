@@ -23,7 +23,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any
 
-from role_diff.fetcher import AccessStatement
+from iam_diff.fetcher import AccessStatement
 
 
 @dataclass

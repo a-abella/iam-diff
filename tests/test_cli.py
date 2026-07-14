@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from unittest.mock import MagicMock, patch
 
-from role_diff.cli import main
+from iam_diff.cli import main
 
 # ---------------------------------------------------------------------------
 # Fixtures
@@ -39,7 +39,7 @@ SAMPLE_STMTS_B = [
 
 def _mock_fetch(side_effects: list):
     """Return a patch context for fetch_statements with given side-effects."""
-    return patch("role_diff.cli.fetch_statements", side_effect=side_effects)
+    return patch("iam_diff.cli.fetch_statements", side_effect=side_effects)
 
 
 # ---------------------------------------------------------------------------
@@ -60,7 +60,7 @@ class TestCLI:
         assert rc == 1
 
     def test_fetch_error_exit_1(self, capsys) -> None:
-        with patch("role_diff.cli.fetch_statements", side_effect=Exception("boom")):
+        with patch("iam_diff.cli.fetch_statements", side_effect=Exception("boom")):
             rc = main(["--no-color", "RoleA", "RoleB"])
         assert rc == 1
         captured = capsys.readouterr()
@@ -82,7 +82,7 @@ class TestCLI:
         assert "No differences found" in out
 
     def test_profile_and_region_passed(self) -> None:
-        with patch("role_diff.cli.fetch_statements") as mock_fetch:
+        with patch("iam_diff.cli.fetch_statements") as mock_fetch:
             mock_fetch.return_value = SAMPLE_STMTS_A
             main(["--no-color", "--profile", "myprofile", "--region", "eu-west-1", "RoleA", "RoleB"])
         calls = mock_fetch.call_args_list

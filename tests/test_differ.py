@@ -4,13 +4,13 @@ from __future__ import annotations
 
 import io
 
-from role_diff.differ import (
+from iam_diff.differ import (
     ChangeKind,
     ResourceDiff,
     compute_diff,
     render_diff,
 )
-from role_diff.normalizer import ResourceAccess
+from iam_diff.normalizer import ResourceAccess
 
 # ---------------------------------------------------------------------------
 # Helpers

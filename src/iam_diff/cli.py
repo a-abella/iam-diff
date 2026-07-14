@@ -1,22 +1,22 @@
 """
-CLI entry point for role-diff.
+CLI entry point for iam-diff.
 
 Usage examples:
 
     # Compare two roles in the default account / profile
-    role-diff MyRoleA MyRoleB
+    iam-diff MyRoleA MyRoleB
 
     # With explicit AWS profile and region
-    role-diff --profile staging --region us-east-1 MyRoleA MyRoleB
+    iam-diff --profile staging --region us-east-1 MyRoleA MyRoleB
 
     # Compare a role against a managed policy ARN
-    role-diff MyRole arn:aws:iam::123456789012:policy/MyPolicy
+    iam-diff MyRole arn:aws:iam::123456789012:policy/MyPolicy
 
     # Hide unchanged action lines (show only +/-)
-    role-diff --no-context MyRoleA MyRoleB
+    iam-diff --no-context MyRoleA MyRoleB
 
     # Suppress ANSI color
-    role-diff --no-color MyRoleA MyRoleB | tee diff.txt
+    iam-diff --no-color MyRoleA MyRoleB | tee diff.txt
 """
 
 from __future__ import annotations
@@ -25,15 +25,15 @@ import argparse
 import logging
 import sys
 
-from role_diff import __version__
-from role_diff.differ import compute_diff, render_diff
-from role_diff.fetcher import fetch_statements
-from role_diff.normalizer import normalize
+from iam_diff import __version__
+from iam_diff.differ import compute_diff, render_diff
+from iam_diff.fetcher import fetch_statements
+from iam_diff.normalizer import normalize
 
 
 def _build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
-        prog="role-diff",
+        prog="iam-diff",
         description=(
             "Diff the functional IAM access of two AWS roles or managed policies.\n\n"
             "LEFT and RIGHT may be:\n"

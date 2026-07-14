@@ -1,4 +1,4 @@
-# role-diff
+# iam-diff
 
 Diff the **functional IAM access** of two AWS roles or managed policies.
 
@@ -16,7 +16,7 @@ uv pip install -e .
 ## Usage
 
 ```
-role-diff [OPTIONS] LEFT RIGHT
+iam-diff [OPTIONS] LEFT RIGHT
 ```
 
 `LEFT` and `RIGHT` may each be:
@@ -28,22 +28,22 @@ role-diff [OPTIONS] LEFT RIGHT
 
 ```bash
 # Compare two roles using the default credential chain
-role-diff DevRole ProdRole
+iam-diff DevRole ProdRole
 
 # Explicit AWS profile and region
-role-diff --profile staging --region us-west-2 DevRole ProdRole
+iam-diff --profile staging --region us-west-2 DevRole ProdRole
 
 # Hide context lines; show only additions and removals
-role-diff --no-context DevRole ProdRole
+iam-diff --no-context DevRole ProdRole
 
 # Skip principals/resources with no differences
-role-diff --only-changed DevRole ProdRole
+iam-diff --only-changed DevRole ProdRole
 
 # Disable ANSI color (e.g. for piping to a file)
-role-diff --no-color DevRole ProdRole | tee diff.txt
+iam-diff --no-color DevRole ProdRole | tee diff.txt
 
 # Compare a role against a standalone managed policy
-role-diff MyRole arn:aws:iam::123456789012:policy/ReadOnlyAccess
+iam-diff MyRole arn:aws:iam::123456789012:policy/ReadOnlyAccess
 ```
 
 ### Exit codes

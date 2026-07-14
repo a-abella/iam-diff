@@ -1,5 +1,5 @@
 [project]
-name = "role-diff"
+name = "iam-diff"
 version = "0.1.0"
 description = "Diff the functional access of two AWS IAM roles and/or policies"
 readme = "README.md"
@@ -9,7 +9,7 @@ dependencies = [
 ]
 
 [project.scripts]
-role-diff = "role_diff.cli:main"
+iam-diff = "iam_diff.cli:main"
 
 [dependency-groups]
 dev = [

@@ -1,5 +1,5 @@
 def main():
-    print("Hello from role-diff!")
+    print("Hello from iam-diff!")
 
 
 if __name__ == "__main__":

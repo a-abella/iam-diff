@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from role_diff.fetcher import parse_policy_document
-from role_diff.normalizer import normalize, to_sorted_dict
+from iam_diff.fetcher import parse_policy_document
+from iam_diff.normalizer import normalize, to_sorted_dict
 
 # ---------------------------------------------------------------------------
 # Fixtures / helpers
