@@ -17,6 +17,7 @@ Color scheme (ANSI):
 
 from __future__ import annotations
 
+import fnmatch
 import sys
 from dataclasses import dataclass
 from enum import Enum
@@ -40,6 +41,61 @@ def _color(text: str, code: str, *, use_color: bool = True) -> str:
     if not use_color:
         return text
     return f"{code}{text}{RESET}"
+
+
+# ---------------------------------------------------------------------------
+# Wildcard / glob resolution helpers
+# ---------------------------------------------------------------------------
+
+
+def _resource_matches(pattern: str, resource: str) -> bool:
+    """
+    Return True if *pattern* covers *resource*.
+
+    IAM resource patterns use ``*`` (any sequence) and ``?`` (single char).
+    A plain ``*`` covers every resource ARN.
+    """
+    if pattern == resource:
+        return True
+    return fnmatch.fnmatch(resource, pattern)
+
+
+def _action_matches(pattern: str, action: str) -> bool:
+    """
+    Return True if *pattern* covers *action*.
+
+    e.g. ``sqs:*`` covers ``sqs:ReceiveMessage``.
+    """
+    if pattern == action:
+        return True
+    return fnmatch.fnmatch(action.lower(), pattern.lower())
+
+
+def _effective_net_allow(resource: str, resource_map: dict[str, ResourceAccess]) -> frozenset[str]:
+    """
+    Compute the effective net-allowed actions for *resource* given all
+    entries in *resource_map* (one principal's resource → ResourceAccess dict).
+
+    A broader entry (e.g. ``Resource: *`` with ``sqs:*``) covers a specific
+    resource, so its actions must be folded in before we diff.
+
+    Algorithm:
+    1. Collect all Allow actions from every resource entry whose pattern
+       matches *resource* (including the exact entry itself).
+    2. Keep wildcard action patterns as-is; rely on action-level glob
+       matching during the diff comparison.
+    3. Subtract all Deny actions from every resource entry that matches
+       *resource*.
+    """
+    combined_allow: set[str] = set()
+    combined_deny: set[str] = set()
+
+    for pat, ra in resource_map.items():
+        if _resource_matches(pat, resource):
+            combined_allow.update(ra.allow)
+            combined_deny.update(ra.deny)
+
+    return frozenset(combined_allow - combined_deny)
 
 
 # ---------------------------------------------------------------------------
@@ -76,8 +132,10 @@ class ResourceDiff:
         all_actions = sorted(left_allow | right_allow | left_deny | right_deny)
         diffs: list[ActionDiff] = []
         for action in all_actions:
-            l_has = action in left_allow or action in left_deny
-            r_has = action in right_allow or action in right_deny
+            # An action on one side is "present" if it is explicitly listed
+            # OR if a wildcard pattern on that side covers it.
+            l_has = any(_action_matches(pat, action) for pat in (left_allow | left_deny))
+            r_has = any(_action_matches(pat, action) for pat in (right_allow | right_deny))
             if l_has and r_has:
                 diffs.append(ActionDiff(ChangeKind.EQUAL, action))
             elif r_has:
@@ -116,14 +174,37 @@ def compute_diff(left: AccessMap, right: AccessMap) -> list[PrincipalDiff]:
         right_resources = right.get(principal, {})
         all_resources = sorted(set(left_resources) | set(right_resources))
 
-        resource_diffs = [
-            ResourceDiff(
+        resource_diffs: list[ResourceDiff] = []
+        for res in all_resources:
+            # Compute effective net-allow for each side by folding in any
+            # broader/wildcard resource entries that cover this resource.
+            left_effective = _effective_net_allow(res, left_resources)
+            right_effective = _effective_net_allow(res, right_resources)
+
+            # Build synthetic ResourceAccess objects that carry the resolved
+            # effective permissions so ResourceDiff can diff them cleanly.
+            left_ra_eff = ResourceAccess()
+            left_ra_eff.allow = set(left_effective)
+
+            right_ra_eff = ResourceAccess()
+            right_ra_eff.allow = set(right_effective)
+
+            # Only include this resource entry in the diff when it was
+            # explicitly listed in at least one side (avoids phantom entries
+            # for resources that only match via wildcard on both sides).
+            left_explicit = res in left_resources
+            right_explicit = res in right_resources
+
+            if not left_explicit and not right_explicit:
+                continue  # shouldn't happen, but guard anyway
+
+            rd = ResourceDiff(
                 resource=res,
-                left_ra=left_resources.get(res),
-                right_ra=right_resources.get(res),
+                left_ra=left_ra_eff if left_explicit or left_effective else None,
+                right_ra=right_ra_eff if right_explicit or right_effective else None,
             )
-            for res in all_resources
-        ]
+            resource_diffs.append(rd)
+
         result.append(PrincipalDiff(principal=principal, resource_diffs=resource_diffs))
 
     return result
@@ -163,13 +244,11 @@ def render_diff(
     out = stream or sys.stdout
     color = use_color if use_color is not None else _supports_color(out)
 
-    header_width = max(len(left_label), len(right_label), 40)
-    separator = "─" * (header_width * 2 + 5)
+    separator = "─" * 60
 
     # Header
-    out.write(
-        _color(f"{'─'*4} {left_label:<{header_width}}  {right_label}\n", BOLD, use_color=color)
-    )
+    out.write(_color(f"--- {left_label}\n", RED + BOLD, use_color=color))
+    out.write(_color(f"+++ {right_label}\n", GREEN + BOLD, use_color=color))
     out.write(f"{separator}\n\n")
 
     found_any_diff = False

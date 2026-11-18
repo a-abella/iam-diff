@@ -35,11 +35,12 @@ def _build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="iam-diff",
         description=(
-            "Diff the functional IAM access of two AWS roles or managed policies.\n\n"
+            "Diff the functional IAM access of two AWS roles or policies.\n\n"
             "LEFT and RIGHT may be:\n"
-            "  - An IAM role name          (e.g. MyRole)\n"
-            "  - An IAM role ARN           (e.g. arn:aws:iam::123:role/MyRole)\n"
-            "  - A managed policy ARN      (e.g. arn:aws:iam::123:policy/MyPolicy)\n"
+            "  - An IAM role name               (e.g. MyRole)\n"
+            "  - An IAM role ARN                (e.g. arn:aws:iam::123:role/MyRole)\n"
+            "  - An AWS-managed policy ARN      (e.g. arn:aws:iam::aws:policy/ReadOnlyAccess)\n"
+            "  - A customer-managed policy ARN  (e.g. arn:aws:iam::123:policy/MyPolicy)\n"
         ),
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
